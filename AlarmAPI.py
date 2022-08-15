@@ -118,35 +118,42 @@ def getAlarmsMenu(gvoIP):
                     print ('No device specified')
                     sleep(1)
                 else:
-                    alarms = displayAlarms(gvoIP, deviceAddress, 'Fail')
+                    alarms = displayAlarms(gvoIP, [deviceAddress], 'Fail')
 
             elif alarmsMenuSelect == 3:
                 if deviceAddress == None:
                     print ('No device specified')
                     sleep(1)
                 else:
-                    alarms = displayAlarms(gvoIP, deviceAddress, 'Warn')
+                    alarms = displayAlarms(gvoIP, [deviceAddress], 'Warn')
 
             elif alarmsMenuSelect == 4:
                 if deviceAddress == None:
                     print ('No device specified')
                     sleep(1)
                 else:
-                    alarms = displayAlarms(gvoIP, deviceAddress, 'Ok')
+                    alarms = displayAlarms(gvoIP, [deviceAddress], 'Ok')
 
             elif alarmsMenuSelect == 5:
                 if deviceAddress == None:
                     print ('No device specified')
                     sleep(1)
                 else:
-                    alarms = displayAlarms(gvoIP, deviceAddress, 'Unknown')
+                    alarms = displayAlarms(gvoIP, [deviceAddress], 'Unknown')
 
             elif alarmsMenuSelect == 6:
                 if deviceAddress == None:
                     print ('No device specified')
                     sleep(1)
                 else:
-                    alarms = displayAlarms(gvoIP, deviceAddress, 'all')
+                    alarms = displayAlarms(gvoIP, [deviceAddress], 'all')
+
+            elif alarmsMenuSelect == 7: pass
+            elif alarmsMenuSelect == 8: pass
+            elif alarmsMenuSelect == 9: pass
+            elif alarmsMenuSelect == 10: pass
+            elif alarmsMenuSelect == 11:
+                alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'all')
 
             elif alarmsMenuSelect == 12:
                 # check if alarms have been gathered

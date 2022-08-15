@@ -68,36 +68,44 @@ def selectDevice(ipAddress, menu):
             pass
 
 def displayAlarms(ipAddress, deviceAddress, alarmLevel):
-
-    # set alarm state values
-    failValues = ['Critical', 'Fail', 'FAIL']
-    warnValues = ['Warn', 'WARN', 'Major', 'Minor']
-    okValues = ['OK', 'Ok', 'ok', 'normal']
-    unknownValues = ['Unknown', 'UNKNOWN', 'NoState', 'Nostate', 'nostate', 'none', 'None', 'NONE']
-    allValues = failValues + warnValues + okValues + unknownValues
-    if alarmLevel in failValues: state = failValues
-    if alarmLevel in warnValues: state = warnValues
-    if alarmLevel in okValues: state = okValues
-    if alarmLevel in unknownValues: state = unknownValues
-    if alarmLevel == 'all': state = allValues
-    # get alarms
-    results = json.loads(get(ipAddress, 'alarms?path='+deviceAddress).content)
-    # for alarms matching result, append to list
+    # handle multiple devices
     global alarms
     alarms=[]
-    i=0
-    while i < len(results):
-        if results[i]['state']['state'] in state:
-            alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
-        i=i+1
-    i=0
-    while i < len(alarms):
-        print('Alarm: '+alarms[i]['name'])
-        print('State: '+alarms[i]['state'])
-        print('Value: '+alarms[i]['value'])
-        print('Timestamp: '+alarms[i]['timestamp'])
-        print('------------------------------')
-        i=i+1
+    j=0
+    n=1
+    while j < len(deviceAddress):
+
+        # set alarm state values
+        failValues = ['Critical', 'Fail', 'FAIL']
+        warnValues = ['Warn', 'WARN', 'Major', 'Minor']
+        okValues = ['OK', 'Ok', 'ok', 'normal']
+        unknownValues = ['Unknown', 'UNKNOWN', 'NoState', 'Nostate', 'nostate', 'none', 'None', 'NONE']
+        allValues = failValues + warnValues + okValues + unknownValues
+        if alarmLevel in failValues: state = failValues
+        if alarmLevel in warnValues: state = warnValues
+        if alarmLevel in okValues: state = okValues
+        if alarmLevel in unknownValues: state = unknownValues
+        if alarmLevel == 'all': state = allValues
+        # get alarms
+        results = json.loads(get(ipAddress, 'alarms?path='+str(deviceAddress[j])).content)
+        # for alarms matching result, append to list
+        i=0
+        while i < len(results):
+            print('n='+str(n))
+            if results[i]['state']['state'] in state:
+                alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
+            i=i+1
+            n=n+1
+        j=j+1
+    k=0
+    while k < len(alarms):
+        #print('Alarm: '+alarms[k]['name'])
+        #print('State: '+alarms[k]['state'])
+        #print('Value: '+alarms[k]['value'])
+        #print('Timestamp: '+alarms[k]['timestamp'])
+        #print('------------------------------')
+        k=k+1
+        print('k='+str(k))
     print('Press any key to continue')
     wait()
     return alarms
