@@ -8,6 +8,7 @@ def clear():
 #wait for key press
 def wait():
     m.getch()
+    print('Where\'s the \'Any\' key?')
 
 # check for IPv4 address
 def isGoodIPv4(s):
