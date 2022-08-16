@@ -9,6 +9,22 @@ def deviceList(ipAddress):
     deviceList.sort()
     return deviceList
 
+def getDeviceName(dAddress, ipAddress):
+    if dAddress in deviceList(ipAddress):
+        # get all alarms for dAddress
+        name = json.loads(get(ipAddress, 'alarms?path='+dAddress).content)
+        # if NAME or IDNAME exists, get device name for selected device
+        deviceName=dAddress
+        i=0
+        while i < len(name):
+            if name[i]['id']['name'] == "NAME":
+                deviceName = name[i]['state']['value']
+            # I don't think I ever want to use IDNAME
+            #elif name[i]['id']['name'] == "IDNAME":
+            #    deviceName = name[i]['state']['value']
+            i=i+1
+        return deviceName
+
 def selectDevice(ipAddress, menu):
     singleDeviceLoop = True
     while singleDeviceLoop:
@@ -21,15 +37,8 @@ def selectDevice(ipAddress, menu):
             deviceNum = 1
             maxDevices = len(devices)+1
             while deviceNum < maxDevices:
-                deviceName = devices[deviceNum-1]
-                # get all alarms for devices
-                alarms = json.loads(get(ipAddress, 'alarms?path='+devices[deviceNum-1]).content)
-                i=0
-                # check device alarms for a user friendly name
-                while i < len(alarms):
-                    if alarms[i]['id']['name'] == "NAME" or alarms[i]['id']['name'] == "IDNAME":
-                        deviceName = alarms[i]['state']['value']
-                    i=i+1
+                # get all alarms for devices, then get name if it exists
+                deviceName = getDeviceName(devices[deviceNum-1], ipAddress)
                 # create numeric list for user select
                 print(' ['+str(deviceNum)+'] '+str(devices[deviceNum-1])+' - '+str(deviceName))
                 deviceNum = deviceNum+1
@@ -39,15 +48,9 @@ def selectDevice(ipAddress, menu):
             deviceSelect = int(input('Select Device number: '))
             deviceSelect = deviceSelect-1
             if 0 <= deviceSelect <= maxDevices:
-                name = json.loads(get(ipAddress, 'alarms?path='+devices[deviceSelect]).content)
-                # if NAME or IDNAME exists, get device name for selected device
-                i=0
-                while i < len(name):
-                    if name[i]['id']['name'] == "NAME" or name[i]['id']['name'] == "IDNAME":
-                        deviceName = name[i]['state']['value']
-                    i=i+1
-                device = {"address": devices[deviceSelect], "name": deviceName}
+                deviceName = getDeviceName(devices[deviceSelect], ipAddress)
                 #return device with "name" and "address" key pairs
+                device = {"address": devices[deviceSelect], "name": deviceName}
                 return device
             elif deviceSelect == -1:
                 return {"address": None, "name": None}
@@ -72,12 +75,11 @@ def displayAlarms(ipAddress, deviceAddress, alarmLevel):
     global alarms
     alarms=[]
     j=0
-    n=1
+    #n=1
     while j < len(deviceAddress):
-
         # set alarm state values
-        failValues = ['Critical', 'Fail', 'FAIL']
-        warnValues = ['Warn', 'WARN', 'Major', 'Minor']
+        failValues = ['Critical', 'critical', 'Fail', 'FAIL', 'fail']
+        warnValues = ['Warn', 'warn', 'WARN', 'Major', 'Minor', 'major', 'minor']
         okValues = ['OK', 'Ok', 'ok', 'normal']
         unknownValues = ['Unknown', 'UNKNOWN', 'NoState', 'Nostate', 'nostate', 'none', 'None', 'NONE']
         allValues = failValues + warnValues + okValues + unknownValues
@@ -88,24 +90,15 @@ def displayAlarms(ipAddress, deviceAddress, alarmLevel):
         if alarmLevel == 'all': state = allValues
         # get alarms
         results = json.loads(get(ipAddress, 'alarms?path='+str(deviceAddress[j])).content)
+        print('Getting '+alarmLevel+' alarms from '+str(deviceAddress[j])+'...')
         # for alarms matching result, append to list
         i=0
         while i < len(results):
-            print('n='+str(n))
             if results[i]['state']['state'] in state:
                 alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
             i=i+1
-            n=n+1
+            #n=n+1
         j=j+1
-    k=0
-    while k < len(alarms):
-        #print('Alarm: '+alarms[k]['name'])
-        #print('State: '+alarms[k]['state'])
-        #print('Value: '+alarms[k]['value'])
-        #print('Timestamp: '+alarms[k]['timestamp'])
-        #print('------------------------------')
-        k=k+1
-        print('k='+str(k))
     print('Press any key to continue')
     wait()
     return alarms

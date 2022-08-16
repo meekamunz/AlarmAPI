@@ -1,5 +1,7 @@
 import msvcrt as m
 import os
+from itertools import cycle
+from time import sleep
 
 #clear screen
 def clear():

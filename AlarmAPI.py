@@ -1,4 +1,4 @@
-from getAlarms import selectDevice, displayAlarms, deviceList
+from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
 from get import get
 from csvAlarms import csvWriter
@@ -11,10 +11,12 @@ subscriber = None
 publisher = None
 deviceName = None
 deviceAddress = None
+alarmsCollected = False
 
 def mainMenu(gvoIP):
     global deviceName
     global deviceAddress
+    global alarmsCollected
     mainMenuLoop = True
     while mainMenuLoop:
         try:
@@ -24,11 +26,12 @@ def mainMenu(gvoIP):
             print('Current Publisher: '+str(publisher))
             print('Current Device: '+str(deviceName))
             print('Current Device address: '+str(deviceAddress))
+            print('Alarms collected?: '+str(alarmsCollected))
             print()
             print('Main Menu')
             print()
             print(' [1] Set GV Orbit IP address')
-            print(' [2] Alarms Menu')
+            print(' [2] Alarm Collection Menu')
             print(' [.]')
             print(' [0] Exit')
             print()
@@ -74,7 +77,9 @@ def getAlarmsMenu(gvoIP):
     # use global variables, not function variables
     global deviceAddress
     global deviceName
+    global alarmsCollected
     alarms = None
+    menuName = 'Alarm Collection Menu'
 
     getAlarmsMenuLoop = True
     while getAlarmsMenuLoop:
@@ -85,8 +90,9 @@ def getAlarmsMenu(gvoIP):
             print('Current Publisher: '+str(publisher))
             print('Current Device: '+str(deviceName))
             print('Current Device address: '+str(deviceAddress))
+            print('Alarms collected?: '+str(alarmsCollected))
             print()
-            print('Alarms Menu')
+            print(menuName)
             print()
             print(' [1] Select device')
             print(' [.]')
@@ -109,7 +115,7 @@ def getAlarmsMenu(gvoIP):
 
             alarmsMenuSelect = int(input('Select an option: '))
             if alarmsMenuSelect == 1:
-                deviceDetails = selectDevice(gvoIP, 'Alarms Menu')
+                deviceDetails = selectDevice(gvoIP, menuName)
                 deviceAddress = deviceDetails["address"]
                 deviceName = deviceDetails["name"]
 
@@ -119,6 +125,7 @@ def getAlarmsMenu(gvoIP):
                     sleep(1)
                 else:
                     alarms = displayAlarms(gvoIP, [deviceAddress], 'Fail')
+                    alarmsCollected = True
 
             elif alarmsMenuSelect == 3:
                 if deviceAddress == None:
@@ -126,6 +133,7 @@ def getAlarmsMenu(gvoIP):
                     sleep(1)
                 else:
                     alarms = displayAlarms(gvoIP, [deviceAddress], 'Warn')
+                    alarmsCollected = True
 
             elif alarmsMenuSelect == 4:
                 if deviceAddress == None:
@@ -133,6 +141,7 @@ def getAlarmsMenu(gvoIP):
                     sleep(1)
                 else:
                     alarms = displayAlarms(gvoIP, [deviceAddress], 'Ok')
+                    alarmsCollected = True
 
             elif alarmsMenuSelect == 5:
                 if deviceAddress == None:
@@ -140,6 +149,7 @@ def getAlarmsMenu(gvoIP):
                     sleep(1)
                 else:
                     alarms = displayAlarms(gvoIP, [deviceAddress], 'Unknown')
+                    alarmsCollected = True
 
             elif alarmsMenuSelect == 6:
                 if deviceAddress == None:
@@ -147,13 +157,27 @@ def getAlarmsMenu(gvoIP):
                     sleep(1)
                 else:
                     alarms = displayAlarms(gvoIP, [deviceAddress], 'all')
+                    alarmsCollected = True
 
-            elif alarmsMenuSelect == 7: pass
-            elif alarmsMenuSelect == 8: pass
-            elif alarmsMenuSelect == 9: pass
-            elif alarmsMenuSelect == 10: pass
+            elif alarmsMenuSelect == 7:
+                alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'Fail')
+                alarmsCollected = True
+
+            elif alarmsMenuSelect == 8:
+                alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'Warn')
+                alarmsCollected = True
+
+            elif alarmsMenuSelect == 9:
+                alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'Ok')
+                alarmsCollected = True
+
+            elif alarmsMenuSelect == 10:
+                alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'Unknown')
+                alarmsCollected = True
+
             elif alarmsMenuSelect == 11:
                 alarms = displayAlarms(gvoIP, deviceList(gvoIP), 'all')
+                alarmsCollected = True
 
             elif alarmsMenuSelect == 12:
                 # check if alarms have been gathered
@@ -161,9 +185,7 @@ def getAlarmsMenu(gvoIP):
                     print('No alarms collected for device: '+str(deviceAddress)+' - '+str(deviceName))
                     sleep(1)
                 else:
-                    if deviceName != None:
-                        csvWriter(alarms, deviceName)
-                    else: csvWriter(alarms, deviceAddress)
+                    csvWriter(alarms, gvoIP)
             elif alarmsMenuSelect == 0:
                 getAlarmsMenuLoop = False
         except (IndexError, ValueError) as e: # input error handling, can print(e) if required
@@ -175,7 +197,7 @@ def getAlarmsMenu(gvoIP):
 
 if __name__ == '__main__':
     # 1st commandline argument is GVO IP address
-    if len(sys.argv)>1:
+    if len(sys.argv)==2:
         if isGoodIPv4(sys.argv[1]) == True:
             gvoIP = sys.argv[1]
         else: gvoIP = None
@@ -183,27 +205,19 @@ if __name__ == '__main__':
         gvoIP = None
 
     # 2nd commandline argument is device address
-    if len(sys.argv)>2:
+    if len(sys.argv)==3:
         # first check IP address is OK
         if isGoodIPv4(sys.argv[1]) == True:
             gvoIP = sys.argv[1]
-            # now check if deviceAddress exists
-            dAddress = sys.argv[2]
-            if dAddress in deviceList(gvoIP):
-                deviceAddress = dAddress
-                name = json.loads(get(gvoIP, 'alarms?path='+deviceAddress).content)
-                # if NAME or IDNAME exists, get device name for selected device
-                i=0
-                while i < len(name):
-                    if name[i]['id']['name'] == "NAME" or name[i]['id']['name'] == "IDNAME":
-                        deviceName = name[i]['state']['value']
-                    i=i+1
-            else:
-                deviceAddress = None
+            # now check if deviceAddress exists and return Name if it the name exists
+            deviceAddress = sys.argv[2]
+            deviceName = getDeviceName(deviceAddress, gvoIP)
         else:
             gvoIP = None
             deviceAddress = None
     else:
-        gvoIP = None
+        if isGoodIPv4(sys.argv[1]) == True:
+            gvoIP = sys.argv[1]
+        else: gvoIP = None
         deviceAddress = None
     mainMenu(gvoIP)
