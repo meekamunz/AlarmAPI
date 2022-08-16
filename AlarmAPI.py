@@ -1,10 +1,9 @@
 from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
-from get import get
+from publisher import createPublisher, setAlarm
 from csvAlarms import csvWriter
 from time import sleep
 import sys
-import json
 
 # vars
 subscriber = None
@@ -13,10 +12,12 @@ deviceName = None
 deviceAddress = None
 alarmsCollected = False
 
+# Main Menu
 def mainMenu(gvoIP):
     global deviceName
     global deviceAddress
     global alarmsCollected
+    global publisher
     mainMenuLoop = True
     while mainMenuLoop:
         try:
@@ -32,6 +33,7 @@ def mainMenu(gvoIP):
             print()
             print(' [1] Set GV Orbit IP address')
             print(' [2] Alarm Collection Menu')
+            print(' [3] Alarm Publisher Menu')
             print(' [.]')
             print(' [0] Exit')
             print()
@@ -62,6 +64,8 @@ def mainMenu(gvoIP):
                     sleep(1)
                 else:
                     getAlarmsMenu(gvoIP)
+            elif mainMenuSelect == 3:
+                publishAlarmsMenu(gvoIP)
             elif mainMenuSelect == 0:
                 clear()
                 sys.exit()
@@ -73,11 +77,59 @@ def mainMenu(gvoIP):
             print()
             sleep(1)
 
+# Publisher Menu
+def publishAlarmsMenu(gvoIP):
+    # use global variables, not function variables
+    global deviceAddress
+    global deviceName
+    global alarmsCollected
+    global publisher
+    menuName = 'Alarm Publisher Menu'
+
+    publishAlarmsMenuLoop = True
+    while publishAlarmsMenuLoop:
+        try:
+            clear()
+            print('Current GV Orbit IP address: '+str(gvoIP))
+            print('Current Subscriber: '+str(subscriber))
+            print('Current Publisher: '+str(publisher))
+            print('Current Device: '+str(deviceName))
+            print('Current Device address: '+str(deviceAddress))
+            print('Alarms collected?: '+str(alarmsCollected))
+            print()
+            print(menuName)
+            print()
+            print(' [1] Create Publisher')
+            print(' [2] Publish Single Alarm')
+            print(' [.]')
+            print(' [0] Return to Main Menu')
+            print()
+
+            publishAlarmsMenuSelect = int(input('Select an option: '))
+            if publishAlarmsMenuSelect == 1:
+                pub = createPublisher(gvoIP)
+                publisher = pub['name']
+                origin = pub['origin']
+
+            elif publishAlarmsMenuSelect == 2:
+                setAlarm(gvoIP, origin)
+
+            elif publishAlarmsMenuSelect == 0:
+                publishAlarmsMenuLoop = False
+        except (IndexError, ValueError) as e: # input error handling, can print(e) if required
+            print()
+            print ('Invalid selection.  Please use a number in the list.')
+            print('Type [0] to return to Main Menu')
+            print()
+            sleep(1)
+
+# Alarms Menu
 def getAlarmsMenu(gvoIP):
     # use global variables, not function variables
     global deviceAddress
     global deviceName
     global alarmsCollected
+    global publisher
     alarms = None
     menuName = 'Alarm Collection Menu'
 

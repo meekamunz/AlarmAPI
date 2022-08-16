@@ -1,6 +1,6 @@
 import json
 from functions import wait, clear
-from get import get
+from apiAccess import get
 from time import sleep
 
 def deviceList(ipAddress):
@@ -75,7 +75,6 @@ def displayAlarms(ipAddress, deviceAddress, alarmLevel):
     global alarms
     alarms=[]
     j=0
-    #n=1
     while j < len(deviceAddress):
         # set alarm state values
         failValues = ['Critical', 'critical', 'Fail', 'FAIL', 'fail']
@@ -97,7 +96,6 @@ def displayAlarms(ipAddress, deviceAddress, alarmLevel):
             if results[i]['state']['state'] in state:
                 alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
             i=i+1
-            #n=n+1
         j=j+1
     print('Press any key to continue')
     wait()
