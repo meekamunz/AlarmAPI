@@ -1,6 +1,6 @@
 import csv
 from getAlarms import getDeviceName
-from tkinter.filedialog import asksaveasfile, asksaveasfilename
+from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 def csvWriter(alarms, ipAddress):
     fileName = alarmsFile()
@@ -24,6 +24,39 @@ def csvWriter(alarms, ipAddress):
 
 # select destination file
 def alarmsFile():
-    data = [('All tyes(*.*)', '*.*'),("csv file(*.csv)","*.csv")]
-    outFile = asksaveasfilename(filetypes = data, defaultextension = data)
+    types = [('All tyes(*.*)', '*.*'),("csv file(*.csv)","*.csv")]
+    outFile = asksaveasfilename(filetypes = types, defaultextension = types)
     return str(outFile)
+
+# open csv file and convert to dictionary
+def importCSV(origin):
+    # open csv file as 'inFile'
+    types = [('All tyes(*.*)', '*.*'),("csv file(*.csv)","*.csv")]
+    inFile = askopenfilename(filetypes = types, defaultextension = types)
+
+    # convert inFile to alarm data
+    with open (str(inFile), newline='') as csvFile:
+        reader = csv.reader(csvFile, delimiter=',')
+        i=0
+        alarmData = []
+        for row in reader:
+            if row[0] == 'Device Name':
+                print('Skipping column headers...')
+            else:
+                # read columns into variables
+                deviceName = row[0]
+                path = row[1]
+                alarm = row[2]
+                timestamp = row[3]
+                state = row[4]
+                value = row[5]
+                latchedState = row[6]
+                masked = row[7]
+                unmaskedState = row[8]
+                inverted = row[9]
+                acked = row[10]
+                ackedBy = row[11]
+                i=i+1
+                # write variables as key:pairs
+                data = {"id": {"name": str(alarm), "path": str(path)},"origin": str(origin),"state": {"acked": str(acked), "ackedBy": str(ackedBy), "inverted": str(inverted), "latchedState": str(latchedState), "masked": str(masked), "state": str(state), "timestamp": str(timestamp), "unmaskedState": str(unmaskedState), "value": str(value)}}
+                alarmData.append(data)

@@ -2,6 +2,14 @@ import msvcrt as m
 import os
 from itertools import cycle
 from time import sleep
+from json import JSONEncoder
+
+# subclass JSONEncoder
+class DateTimeEncoder(JSONEncoder):
+    #Override the default method
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
 
 #clear screen
 def clear():

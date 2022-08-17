@@ -1,6 +1,6 @@
 from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
-from publisher import createPublisher, setAlarm
+from publisher import createPublisher, setAlarm, maintainAlarms
 from csvAlarms import csvWriter
 from time import sleep
 import sys
@@ -8,6 +8,7 @@ import sys
 # vars
 subscriber = None
 publisher = None
+origin = None
 deviceName = None
 deviceAddress = None
 alarmsCollected = False
@@ -18,6 +19,7 @@ def mainMenu(gvoIP):
     global deviceAddress
     global alarmsCollected
     global publisher
+    global origin
     mainMenuLoop = True
     while mainMenuLoop:
         try:
@@ -25,6 +27,7 @@ def mainMenu(gvoIP):
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
+            print('Current PublisherID: '+str(origin))
             print('Current Device: '+str(deviceName))
             print('Current Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
@@ -84,6 +87,7 @@ def publishAlarmsMenu(gvoIP):
     global deviceName
     global alarmsCollected
     global publisher
+    global origin
     menuName = 'Alarm Publisher Menu'
 
     publishAlarmsMenuLoop = True
@@ -93,6 +97,7 @@ def publishAlarmsMenu(gvoIP):
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
+            print('Current PublisherID: '+str(origin))
             print('Current Device: '+str(deviceName))
             print('Current Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
@@ -100,7 +105,9 @@ def publishAlarmsMenu(gvoIP):
             print(menuName)
             print()
             print(' [1] Create Publisher')
-            print(' [2] Publish Single Alarm')
+            print(' [2] Maintain Publisher (do this after publishing alarms)')
+            print(' [3] Publish Single Alarm')
+            print(' [4] Publish CSV Alarm Data')
             print(' [.]')
             print(' [0] Return to Main Menu')
             print()
@@ -112,7 +119,23 @@ def publishAlarmsMenu(gvoIP):
                 origin = pub['origin']
 
             elif publishAlarmsMenuSelect == 2:
-                setAlarm(gvoIP, origin)
+                if publisher != None:
+                    maintainAlarms(gvoIP, publisher, origin)
+                else:
+                    print('Publisher not created')
+                    sleep(1)
+
+            elif publishAlarmsMenuSelect == 3:
+                if publisher != None:
+                    setAlarm(gvoIP, origin)
+                else:
+                    print('Publisher not created')
+                    sleep(1)
+
+            elif publishAlarmsMenuSelect == 4:
+                # do not do this yet until clean up tasks added
+                # put csv import/publisher here
+                pass
 
             elif publishAlarmsMenuSelect == 0:
                 publishAlarmsMenuLoop = False
@@ -130,6 +153,7 @@ def getAlarmsMenu(gvoIP):
     global deviceName
     global alarmsCollected
     global publisher
+    global origin
     alarms = None
     menuName = 'Alarm Collection Menu'
 
@@ -140,6 +164,7 @@ def getAlarmsMenu(gvoIP):
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
+            print('Current PublisherID: '+str(origin))
             print('Current Device: '+str(deviceName))
             print('Current Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
