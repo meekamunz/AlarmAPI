@@ -1,4 +1,5 @@
 import csv
+from functions import wait, clear
 from getAlarms import getDeviceName
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
@@ -40,6 +41,7 @@ def importCSV(origin):
         i=0
         alarmData = []
         for row in reader:
+            clear()
             if row[0] == 'Device Name':
                 print('Skipping column headers...')
             else:
@@ -56,7 +58,11 @@ def importCSV(origin):
                 inverted = row[9]
                 acked = row[10]
                 ackedBy = row[11]
-                i=i+1
+                # user information
+                print('Reading line '+str(i)+', Device: '+deviceName+', Alarm: '+alarm)
+
                 # write variables as key:pairs
                 data = {"id": {"name": str(alarm), "path": str(path)},"origin": str(origin),"state": {"acked": str(acked), "ackedBy": str(ackedBy), "inverted": str(inverted), "latchedState": str(latchedState), "masked": str(masked), "state": str(state), "timestamp": str(timestamp), "unmaskedState": str(unmaskedState), "value": str(value)}}
                 alarmData.append(data)
+            i=i+1
+    return alarmData

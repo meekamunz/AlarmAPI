@@ -1,6 +1,6 @@
 from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
-from publisher import createPublisher, setAlarm, maintainAlarms
+from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
 from time import sleep
 import sys
@@ -109,6 +109,9 @@ def publishAlarmsMenu(gvoIP):
             print(' [3] Publish Single Alarm')
             print(' [4] Publish CSV Alarm Data')
             print(' [.]')
+            print(' [5] Remove All Alarms for current Publisher')
+            print(' [6] Delete Publisher')
+            print(' [.]')
             print(' [0] Return to Main Menu')
             print()
 
@@ -134,8 +137,27 @@ def publishAlarmsMenu(gvoIP):
 
             elif publishAlarmsMenuSelect == 4:
                 # do not do this yet until clean up tasks added
-                # put csv import/publisher here
+                if publisher != None:
+                    publishAllAlarms(gvoIP, origin)
+                else:
+                    print('Publisher not created')
+                    sleep(1)
+
+            elif publishAlarmsMenuSelect == 5:
+                # not working, 400 error on removal command
+                #if publisher != None:
+                #    removeAlarms(gvoIP, origin)
+                #else:
+                #    print('Publisher not created')
+                #    sleep(1)
                 pass
+
+            elif publishAlarmsMenuSelect == 6:
+                if publisher != None:
+                    removePublisher(gvoIP, origin)
+                else:
+                    print('Publisher not created')
+                    sleep(1)
 
             elif publishAlarmsMenuSelect == 0:
                 publishAlarmsMenuLoop = False

@@ -1,6 +1,7 @@
+import ipaddress
 import uuid
 from functions import wait, clear
-from apiAccess import put, post
+from apiAccess import put, post, delete
 from csvAlarms import importCSV
 from time import sleep
 import datetime
@@ -23,17 +24,18 @@ def createPublisher(ipAddress):
     return data
 
 def maintainAlarms(ipAddress, name, origin):
+    clear()
     data = {'name': name, 'origin': origin}
-    p = put(ipAddress, 'publishers', data)
+    #p = put(ipAddress, 'publishers', data)
     print('Maintaining alarms for Publisher: '+name+', PublisherID: '+origin)
     print('Press \'<ctrl+c>\' to stop')
-    i=0
     try:
         while True:
+            p = put(ipAddress, 'publishers', data)
             if p.status_code == 201:
-                p
-                print(i, p)
-                i=i+10
+                # publish again, then wait for 10 seconds.  
+                # for some reason I can't use the 'p' variable to publish again???
+                #put(ipAddress, 'publishers', data)
                 sleep(10)
             else:
                 print('Failed to maintain alarm publisher.')
@@ -69,4 +71,15 @@ def publishAllAlarms(ipAddress, origin):
     alarmData = importCSV(origin)
     p = post(ipAddress, 'alarms', alarmData)
     print(p)
+    sleep(0.5)
+
+def removeAlarms(ipAddress, origin):
+    data = [{'id': {'name': '*'},'origin': str(origin)}]
+    p = post(ipAddress, 'alarms/deletions?publicationId='+origin, data)
+    print(p)
+    sleep(0.5)
+
+def removePublisher(ipAddress, origin):
+    d = delete(ipAddress, 'publishers?publicationId='+origin, None)
+    print(d)
     sleep(0.5)
