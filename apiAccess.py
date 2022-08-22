@@ -20,7 +20,7 @@ def post(ipAddress, call, payload):
 def delete(ipAddress, call, payload):
     h = {'Content-type': 'application/json', 'Accept': '*/*'}
     if payload != None:
-        deleteRequest = requests.delete('http://' + ipAddress + ':9099/alarmapi/v1' + call, json=payload, headers=h)
+        deleteRequest = requests.delete('http://' + ipAddress + ':9099/alarmapi/v1/' + call, json=payload, headers=h)
     else:
-        deleteRequest = requests.delete('http://' + ipAddress + ':9099/alarmapi/v1' + call, headers=h)
+        deleteRequest = requests.delete('http://' + ipAddress + ':9099/alarmapi/v1/' + call, headers=h)
     return deleteRequest

@@ -144,17 +144,18 @@ def publishAlarmsMenu(gvoIP):
                     sleep(1)
 
             elif publishAlarmsMenuSelect == 5:
-                # not working, 400 error on removal command
-                #if publisher != None:
-                #    removeAlarms(gvoIP, origin)
-                #else:
-                #    print('Publisher not created')
-                #    sleep(1)
+                if publisher != None:
+                    removeAlarms(gvoIP, origin)
+                else:
+                    print('Publisher not created')
+                    sleep(1)
                 pass
 
             elif publishAlarmsMenuSelect == 6:
                 if publisher != None:
                     removePublisher(gvoIP, origin)
+                    origin = None
+                    publisher = None
                 else:
                     print('Publisher not created')
                     sleep(1)
@@ -299,24 +300,17 @@ if __name__ == '__main__':
     if len(sys.argv)==2:
         if isGoodIPv4(sys.argv[1]) == True:
             gvoIP = sys.argv[1]
-        else: gvoIP = None
-    else:
-        gvoIP = None
 
     # 2nd commandline argument is device address
-    if len(sys.argv)==3:
+    elif len(sys.argv)==3:
         # first check IP address is OK
         if isGoodIPv4(sys.argv[1]) == True:
             gvoIP = sys.argv[1]
             # now check if deviceAddress exists and return Name if it the name exists
             deviceAddress = sys.argv[2]
             deviceName = getDeviceName(deviceAddress, gvoIP)
-        else:
-            gvoIP = None
-            deviceAddress = None
+
     else:
-        if isGoodIPv4(sys.argv[1]) == True:
-            gvoIP = sys.argv[1]
-        else: gvoIP = None
+        gvoIP = None
         deviceAddress = None
     mainMenu(gvoIP)
