@@ -2,7 +2,7 @@ from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
-from apiAccess import purge
+from apiAccess import purge, delete
 from subscriber import createSubscriber, getAlarmSubs, getSubscriber
 from time import sleep
 import sys
@@ -14,6 +14,34 @@ origin = None
 deviceName = None
 deviceAddress = None
 alarmsCollected = False
+title = '(R)ead (O)rbit (A)larms and w(R)ite - roar.exe'
+
+# Exit tasks
+def exitProgram(ipAddress, origin, subscriber):
+    print('Cleaning up Publishers and Subscribers...')
+    if origin != None:
+        if removePublisher(ipAddress, origin).status_code == 204:
+            print('Publishers removed.')
+        else: print('Error removing Publisher.')
+        sleep(0.5)
+    if subscriber != None:
+        data = None
+        d = delete(ipAddress, 'subscribers?subscriptionId='+subscriber, data)
+        print (d)
+        if d.status_code == 204:
+            print('Subscriber removed.')
+        else: print('Error removing Subscriber.')
+        sleep(0.5)
+    print('Done.')
+    sleep(0.5)
+    # Final thing to do...
+    sys.exit()
+
+# Help
+def help():
+    print('usage: roar [IP address of GV Orbit server] [device address]')
+    sleep(0.25)
+    print('Press any key to continue...')
 
 # Main Menu
 def mainMenu(gvoIP):
@@ -27,6 +55,8 @@ def mainMenu(gvoIP):
     while mainMenuLoop:
         try:
             clear()
+            print(title)
+            print()
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
@@ -104,8 +134,9 @@ def mainMenu(gvoIP):
                         sleep(1)
 
             elif mainMenuSelect == 0:
-                clear()
-                sys.exit()
+                #clear()
+                #sys.exit()
+                exitProgram(gvoIP,origin, subscriber)
 
         except (IndexError, ValueError) as e: # input error handling, can print(e) if required
             print()
@@ -129,6 +160,8 @@ def subscriberMenu(gvoIP):
     while subscriberMenuLoop:
         try:
             clear()
+            print(title)
+            print()
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
@@ -184,6 +217,8 @@ def publishAlarmsMenu(gvoIP):
     while publishAlarmsMenuLoop:
         try:
             clear()
+            print(title)
+            print()
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
@@ -274,6 +309,8 @@ def getAlarmsMenu(gvoIP):
     while getAlarmsMenuLoop:
         try:
             clear()
+            print(title)
+            print()
             print('Current GV Orbit IP address: '+str(gvoIP))
             print('Current Subscriber: '+str(subscriber))
             print('Current Publisher: '+str(publisher))
@@ -390,6 +427,11 @@ if __name__ == '__main__':
     if len(sys.argv)==2:
         if isGoodIPv4(sys.argv[1]) == True:
             gvoIP = sys.argv[1]
+        else:
+            help()
+            wait()
+            gvoIP = None
+            deviceAddress = None
 
     # 2nd commandline argument is device address
     elif len(sys.argv)==3:

@@ -1,6 +1,5 @@
 import msvcrt as m
 import os
-from itertools import cycle
 from time import sleep
 from json import JSONEncoder
 

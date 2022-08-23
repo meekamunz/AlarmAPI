@@ -106,3 +106,4 @@ def removePublisher(ipAddress, origin):
     d = delete(ipAddress, 'publishers?publicationId='+origin, None)
     print(d)
     sleep(0.5)
+    return d
