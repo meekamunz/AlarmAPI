@@ -1,5 +1,5 @@
 # AlarmAPI
-#/dist/roar.exe is the distributed program
+#/dist/roar.exe is the compiled program
 #
 #you can use the python version of roar.py as well
 #
