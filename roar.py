@@ -3,7 +3,7 @@ from functions import wait, clear, isGoodIPv4
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
 from apiAccess import purge, delete
-from subscriber import createSubscriber, getAlarmSubs, getSubscriber
+from subscriber import createSubscriber, getAlarmSubs, getSubscriber, subscribeAll
 from time import sleep
 import sys
 
@@ -14,8 +14,8 @@ origin = None
 deviceName = None
 deviceAddress = None
 alarmsCollected = False
-title = '(R)ead (O)rbit (A)larms and w(R)ite - roar.exe'
-
+titleName = '| (R)ead (O)rbit (A)larms and w(R)ite - roar.exe |'
+title = len(titleName)*'-'+'\n'+titleName+'\n'+len(titleName)*'-'
 # Exit tasks
 def exitProgram(ipAddress, origin, subscriber):
     print('Cleaning up Publishers and Subscribers...')
@@ -35,6 +35,7 @@ def exitProgram(ipAddress, origin, subscriber):
     print('Done.')
     sleep(0.5)
     # Final thing to do...
+    clear()
     sys.exit()
 
 # Help
@@ -172,8 +173,10 @@ def subscriberMenu(gvoIP):
             print()
             print(menuName)
             print()
-            print(' [1] Create Alarm Subscriber')
-            print(' [2] Show Live Data')
+            print(' [1] Create Alarm Subscriber, for specified devices')
+            print(' [2] Create Alarm Subscriber, for all devices')
+            print(' [.]')
+            print(' [3] Show Live Data')
             print(' [.]')
             print(' [0] Return to Main Menu')
             print()
@@ -183,6 +186,9 @@ def subscriberMenu(gvoIP):
                 subscriber = createSubscriber(gvoIP)
 
             elif subscriberMenuSelect == 2:
+                subscriber = subscribeAll(gvoIP)
+
+            elif subscriberMenuSelect == 3:
                 if subscriber != None:
                     # check if subscriber still exists
                     if getSubscriber(gvoIP, subscriber) == True: getAlarmSubs(gvoIP, subscriber)

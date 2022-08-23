@@ -52,10 +52,32 @@ def getAlarmSubs(ipAddress, subId):
                 print(json.dumps(data, indent=4, sort_keys=True))
                 print()
                 print('Press \'<ctrl+c>\' to stop')
-                sleep(1)
+                sleep(0.5)
             else:
                 print('Failed to get alarm updates.')
                 sleep(1)
                 break
     except:
         pass
+
+# subscribeAll
+def subscribeAll(ipAddress):
+    # get a list of devices
+    deviceList = json.loads(get(ipAddress, 'devices').text)
+    
+    # add json bits around device addresses
+    devices = ['']*len(deviceList)
+    deviceLoop = True
+    i=0
+    while deviceLoop:
+        if i < len(devices): devices[i] = {'path': deviceList[i]}
+        else: deviceLoop = False
+        i=i+1
+    
+    # combine device list into json data string
+    data = {'type': 'pull', 'filter': devices}
+    
+    # PUT the subscriber creation
+    subscriber = put(ipAddress, 'subscribers', data)
+    return subscriber.content.decode("utf-8")
+

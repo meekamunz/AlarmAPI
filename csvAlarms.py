@@ -1,7 +1,11 @@
 import csv
 from functions import wait, clear
 from getAlarms import getDeviceName
+import tkinter as tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
+
+root=tk.Tk()
+root.withdraw()
 
 # csvWriter
 def csvWriter(alarms, ipAddress):
