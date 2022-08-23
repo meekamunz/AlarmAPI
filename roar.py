@@ -58,20 +58,20 @@ def mainMenu(gvoIP):
             clear()
             print(title)
             print()
-            print('Current GV Orbit IP address: '+str(gvoIP))
-            print('Current Subscriber: '+str(subscriber))
-            print('Current Publisher: '+str(publisher))
-            print('Current PublisherID: '+str(origin))
-            print('Current Device: '+str(deviceName))
-            print('Current Device address: '+str(deviceAddress))
+            print('GV Orbit IP address: '+str(gvoIP))
+            print('Subscriber: '+str(subscriber))
+            print('Publisher: '+str(publisher))
+            print('PublisherID: '+str(origin))
+            print('Device: '+str(deviceName))
+            print('Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
             print()
             print('Main Menu')
             print()
             print(' [1] Set GV Orbit IP address')
-            print(' [2] Alarm Collection Menu')
-            print(' [3] Alarm Publisher Menu')
-            print(' [4] Live Alarm Data Menu')
+            print(' [2] Collect Alarms')
+            print(' [3] Publish Alarms')
+            print(' [4] Live Alarm Data')
             print(' [.]')
             print(' [5] Purge Stale Data')
             print(' [.]')
@@ -163,12 +163,12 @@ def subscriberMenu(gvoIP):
             clear()
             print(title)
             print()
-            print('Current GV Orbit IP address: '+str(gvoIP))
-            print('Current Subscriber: '+str(subscriber))
-            print('Current Publisher: '+str(publisher))
-            print('Current PublisherID: '+str(origin))
-            print('Current Device: '+str(deviceName))
-            print('Current Device address: '+str(deviceAddress))
+            print('GV Orbit IP address: '+str(gvoIP))
+            print('Subscriber: '+str(subscriber))
+            print('Publisher: '+str(publisher))
+            print('PublisherID: '+str(origin))
+            print('Device: '+str(deviceName))
+            print('Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
             print()
             print(menuName)
@@ -217,7 +217,7 @@ def publishAlarmsMenu(gvoIP):
     global publisher
     global origin
     global subscriber
-    menuName = 'Alarm Publisher Menu'
+    menuName = 'Publish Alarms Menu'
 
     publishAlarmsMenuLoop = True
     while publishAlarmsMenuLoop:
@@ -225,12 +225,12 @@ def publishAlarmsMenu(gvoIP):
             clear()
             print(title)
             print()
-            print('Current GV Orbit IP address: '+str(gvoIP))
-            print('Current Subscriber: '+str(subscriber))
-            print('Current Publisher: '+str(publisher))
-            print('Current PublisherID: '+str(origin))
-            print('Current Device: '+str(deviceName))
-            print('Current Device address: '+str(deviceAddress))
+            print('GV Orbit IP address: '+str(gvoIP))
+            print('Subscriber: '+str(subscriber))
+            print('Publisher: '+str(publisher))
+            print('PublisherID: '+str(origin))
+            print('Device: '+str(deviceName))
+            print('Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
             print()
             print(menuName)
@@ -309,7 +309,7 @@ def getAlarmsMenu(gvoIP):
     global origin
     global subscriber
     alarms = None
-    menuName = 'Alarm Collection Menu'
+    menuName = 'Collect Alarms Menu'
 
     getAlarmsMenuLoop = True
     while getAlarmsMenuLoop:
@@ -317,12 +317,12 @@ def getAlarmsMenu(gvoIP):
             clear()
             print(title)
             print()
-            print('Current GV Orbit IP address: '+str(gvoIP))
-            print('Current Subscriber: '+str(subscriber))
-            print('Current Publisher: '+str(publisher))
-            print('Current PublisherID: '+str(origin))
-            print('Current Device: '+str(deviceName))
-            print('Current Device address: '+str(deviceAddress))
+            print('GV Orbit IP address: '+str(gvoIP))
+            print('Subscriber: '+str(subscriber))
+            print('Publisher: '+str(publisher))
+            print('PublisherID: '+str(origin))
+            print('Device: '+str(deviceName))
+            print('Device address: '+str(deviceAddress))
             print('Alarms collected?: '+str(alarmsCollected))
             print()
             print(menuName)
