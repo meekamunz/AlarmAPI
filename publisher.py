@@ -1,4 +1,3 @@
-import ipaddress
 import uuid
 from functions import wait, clear
 from apiAccess import put, post, delete
@@ -6,6 +5,7 @@ from csvAlarms import importCSV
 from time import sleep
 import datetime
 
+# createPublisher
 def createPublisher(ipAddress):
     origin = str(uuid.uuid4())
     try:
@@ -21,8 +21,11 @@ def createPublisher(ipAddress):
     p = put(ipAddress, 'publishers', data)
     print(p)
     sleep(0.5)
+    if p.status_code == 403:
+        data = {'name': 'Write access on server is disabled', 'origin': None}
     return data
 
+# maintainAlarms
 def maintainAlarms(ipAddress, name, origin):
     clear()
     data = {'name': name, 'origin': origin}
@@ -44,28 +47,43 @@ def maintainAlarms(ipAddress, name, origin):
     except:
         pass
 
+# setAlarm
 def setAlarm(ipAddress, origin):
-    # get time, limit to milliseconds
+    # get time/date, limit to milliseconds
     t = datetime.datetime.now()
     time = t.isoformat(timespec='milliseconds')
+
+    # legal state values
+    states = ['unknown', 'ok', 'warn', 'fail', 'Unknown', 'Ok', 'Warn', 'Fail', 'UNKNOWN', 'OK', 'WARN', 'FAIL']
 
     # set custom alarm parameters
     try:
         path=input('Set device address: ')
         name=input('Set alarm name: ')
-        state=input('Set alarm state: ')
+        stateLoop = True
+        while stateLoop:
+            state=input('Set alarm state: ')
+            if state in states: stateLoop = False
+            else:
+                print('Invalid state.')
         value=input('Set alarm value: ')
     except (ValueError) as e:# input error handling, can print(e) if required
             print()
-            print('Invalid name')
+            print('Invalid entry.')
             print()
             sleep(1)
             pass
     data = [{'id': {'name': str(name), 'path': str(path)},'origin': str(origin), 'state': {'state': str(state), 'timestamp': str(time)+'Z', 'value': str(value)}}]
     p = post(ipAddress, 'alarms', data)
     print(p)
+    if p.status_code == 409:
+        print('An existing item already exists and cannot be modified.')
+        wait()
     sleep(0.5)
+    # return the current deviceAddress
+    return path
 
+# publishAllAlarms
 def publishAllAlarms(ipAddress, origin):
     # Get CSV data as alarmData
     alarmData = importCSV(origin)
@@ -73,12 +91,17 @@ def publishAllAlarms(ipAddress, origin):
     print(p)
     sleep(0.5)
 
+# removeAlarms
 def removeAlarms(ipAddress, origin):
-    data = [{'id': {'name': '*'},'origin': str(origin)}]
+    # set path and alarm name
+    path=input('Set device address: ')
+    name=input('Set alarm name: ')
+    data = [{"name": name,"path": path}]
     p = post(ipAddress, 'alarms/deletions?publicationId='+origin, data)
     print(p)
     sleep(0.5)
 
+# remove publisher
 def removePublisher(ipAddress, origin):
     d = delete(ipAddress, 'publishers?publicationId='+origin, None)
     print(d)

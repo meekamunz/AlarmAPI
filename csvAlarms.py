@@ -3,6 +3,7 @@ from functions import wait, clear
 from getAlarms import getDeviceName
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
+# csvWriter
 def csvWriter(alarms, ipAddress):
     fileName = alarmsFile()
     f = open(fileName, 'w', newline='')

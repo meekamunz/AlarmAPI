@@ -3,12 +3,14 @@ from functions import wait, clear
 from apiAccess import get
 from time import sleep
 
+# deviceList
 def deviceList(ipAddress):
     # list devices, then sort
     deviceList = json.loads(get(ipAddress, 'devices').text)
     deviceList.sort()
     return deviceList
 
+# getDeviceAlarms
 def getDeviceName(dAddress, ipAddress):
     if dAddress in deviceList(ipAddress):
         # get all alarms for dAddress
@@ -25,6 +27,7 @@ def getDeviceName(dAddress, ipAddress):
             i=i+1
         return deviceName
 
+# selectDevice
 def selectDevice(ipAddress, menu):
     singleDeviceLoop = True
     while singleDeviceLoop:
@@ -70,6 +73,7 @@ def selectDevice(ipAddress, menu):
             sleep(1)
             pass
 
+# displayAlarms
 def displayAlarms(ipAddress, deviceAddress, alarmLevel):
     # handle multiple devices
     global alarms

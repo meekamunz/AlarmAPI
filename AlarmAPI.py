@@ -2,6 +2,8 @@ from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
+from apiAccess import purge
+from subscriber import createSubscriber, getAlarmSubs, getSubscriber
 from time import sleep
 import sys
 
@@ -20,6 +22,7 @@ def mainMenu(gvoIP):
     global alarmsCollected
     global publisher
     global origin
+    global subscriber
     mainMenuLoop = True
     while mainMenuLoop:
         try:
@@ -37,6 +40,9 @@ def mainMenu(gvoIP):
             print(' [1] Set GV Orbit IP address')
             print(' [2] Alarm Collection Menu')
             print(' [3] Alarm Publisher Menu')
+            print(' [4] Live Alarm Data Menu')
+            print(' [.]')
+            print(' [5] Purge Stale Data')
             print(' [.]')
             print(' [0] Exit')
             print()
@@ -67,8 +73,36 @@ def mainMenu(gvoIP):
                     sleep(1)
                 else:
                     getAlarmsMenu(gvoIP)
+
             elif mainMenuSelect == 3:
-                publishAlarmsMenu(gvoIP)
+                # check IP address for gvoIP is set, run alarms menu if OK
+                if gvoIP == None:
+                    print('No GV Orbit server specified')
+                    sleep(1)
+                else:
+                    publishAlarmsMenu(gvoIP)
+
+            elif mainMenuSelect == 4:
+                # check IP address for gvoIP is set, run alarms menu if OK
+                if gvoIP == None:
+                    print('No GV Orbit server specified')
+                    sleep(1)
+                else:
+                    subscriberMenu(gvoIP)
+
+            elif mainMenuSelect == 5:
+                # check IP address for gvoIP is set, run alarms menu if OK
+                if gvoIP == None:
+                    print('No GV Orbit server specified')
+                    sleep(1)
+                else:
+                    if purge(gvoIP).status_code == 200:
+                        print('Removed stale alarm data.')
+                        sleep(1)
+                    else:
+                        print('Error, check Monitoring service...')
+                        sleep(1)
+
             elif mainMenuSelect == 0:
                 clear()
                 sys.exit()
@@ -80,6 +114,61 @@ def mainMenu(gvoIP):
             print()
             sleep(1)
 
+# Subscriber Menu
+def subscriberMenu(gvoIP):
+    # use global variables, not function variables
+    global deviceAddress
+    global deviceName
+    global alarmsCollected
+    global publisher
+    global origin
+    global subscriber
+    menuName = 'Live Alarm Data Menu'
+
+    subscriberMenuLoop = True
+    while subscriberMenuLoop:
+        try:
+            clear()
+            print('Current GV Orbit IP address: '+str(gvoIP))
+            print('Current Subscriber: '+str(subscriber))
+            print('Current Publisher: '+str(publisher))
+            print('Current PublisherID: '+str(origin))
+            print('Current Device: '+str(deviceName))
+            print('Current Device address: '+str(deviceAddress))
+            print('Alarms collected?: '+str(alarmsCollected))
+            print()
+            print(menuName)
+            print()
+            print(' [1] Create Alarm Subscriber')
+            print(' [2] Show Live Data')
+            print(' [.]')
+            print(' [0] Return to Main Menu')
+            print()
+
+            subscriberMenuSelect = int(input('Select an option: '))
+            if subscriberMenuSelect == 1:
+                subscriber = createSubscriber(gvoIP)
+
+            elif subscriberMenuSelect == 2:
+                if subscriber != None:
+                    # check if subscriber still exists
+                    if getSubscriber(gvoIP, subscriber) == True: getAlarmSubs(gvoIP, subscriber)
+                    else:
+                        print('Subscriber not found or invalid.')
+                        sleep(1)
+                else:
+                    print('Subscriber not created.')
+                    sleep(1)
+
+            elif subscriberMenuSelect == 0:
+                subscriberMenuLoop = False
+        except (IndexError, ValueError) as e: # input error handling, can print(e) if required
+            print()
+            print ('Invalid selection.  Please use a number in the list.')
+            print('Type [0] to return to Main Menu')
+            print()
+            sleep(1)
+
 # Publisher Menu
 def publishAlarmsMenu(gvoIP):
     # use global variables, not function variables
@@ -88,6 +177,7 @@ def publishAlarmsMenu(gvoIP):
     global alarmsCollected
     global publisher
     global origin
+    global subscriber
     menuName = 'Alarm Publisher Menu'
 
     publishAlarmsMenuLoop = True
@@ -130,13 +220,12 @@ def publishAlarmsMenu(gvoIP):
 
             elif publishAlarmsMenuSelect == 3:
                 if publisher != None:
-                    setAlarm(gvoIP, origin)
+                    deviceAddress = setAlarm(gvoIP, origin)
                 else:
                     print('Publisher not created')
                     sleep(1)
 
             elif publishAlarmsMenuSelect == 4:
-                # do not do this yet until clean up tasks added
                 if publisher != None:
                     publishAllAlarms(gvoIP, origin)
                 else:
@@ -177,6 +266,7 @@ def getAlarmsMenu(gvoIP):
     global alarmsCollected
     global publisher
     global origin
+    global subscriber
     alarms = None
     menuName = 'Alarm Collection Menu'
 
@@ -309,6 +399,7 @@ if __name__ == '__main__':
             # now check if deviceAddress exists and return Name if it the name exists
             deviceAddress = sys.argv[2]
             deviceName = getDeviceName(deviceAddress, gvoIP)
+        else: deviceName = None
 
     else:
         gvoIP = None

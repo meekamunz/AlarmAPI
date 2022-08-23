@@ -4,7 +4,7 @@ from itertools import cycle
 from time import sleep
 from json import JSONEncoder
 
-# subclass JSONEncoder
+# JSONEncoder
 class DateTimeEncoder(JSONEncoder):
     #Override the default method
     def default(self, obj):
