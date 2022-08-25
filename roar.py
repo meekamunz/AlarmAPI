@@ -454,5 +454,6 @@ if __name__ == '__main__':
         deviceAddress = None
     
     # set window focus
-    focus('roar')
+    # focus not working
+    #focus('roar')
     mainMenu(gvoIP)
