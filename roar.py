@@ -1,5 +1,5 @@
 from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
-from functions import wait, clear, isGoodIPv4
+from functions import wait, clear, isGoodIPv4, focus
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
 from apiAccess import purge, delete
@@ -452,4 +452,7 @@ if __name__ == '__main__':
     else:
         gvoIP = None
         deviceAddress = None
+    
+    # set window focus
+    focus('roar')
     mainMenu(gvoIP)
