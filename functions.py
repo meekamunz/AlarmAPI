@@ -2,7 +2,7 @@ import msvcrt as m
 import os, re
 from time import sleep
 from json import JSONEncoder
-#import pygetwindow as gw
+import pygetwindow as gw
 
 # JSONEncoder
 class DateTimeEncoder(JSONEncoder):
@@ -28,11 +28,11 @@ def isGoodIPv4(s):
     except ValueError: return False
 
 # set window focus
-#def focus(windowName):
-#    titles = gw.getAllTitles()
-#    search = re.compile('.*'+windowName+'.*')
-#    match = [string for string in titles if re.match(search, string)]
-#    window = gw.getWindowsWithTitle(match[0])[0]
-#    # pygetwindow activate the handle is invalid
-#    window.minimize()
-#    window.restore()
+def focus(windowName):
+    titles = gw.getAllTitles()
+    search = re.compile('.*'+windowName+'.*')
+    match = [string for string in titles if re.match(search, string)]
+    window = gw.getWindowsWithTitle(match[0])[0]
+    # pygetwindow activate the handle is invalid
+    window.minimize()
+    window.restore()
