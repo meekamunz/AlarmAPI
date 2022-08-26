@@ -239,7 +239,7 @@ def publishAlarmsMenu(gvoIP):
             print(' [3] Publish Single Alarm')
             print(' [4] Publish CSV Alarm Data')
             print(' [.]')
-            print(' [5] Remove All Alarms for current Publisher')
+            print(' [5] Remove Alarm for current Publisher')
             print(' [6] Delete Publisher')
             print(' [.]')
             print(' [0] Return to Main Menu')
