@@ -1,4 +1,4 @@
-from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
+﻿from getAlarms import selectDevice, displayAlarms, deviceList, getDeviceName
 from functions import wait, clear, isGoodIPv4, focus
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
@@ -42,7 +42,6 @@ def exitProgram(ipAddress, origin, subscriber):
 def help():
     print('usage: roar [IP address of GV Orbit server] [device address]')
     sleep(0.25)
-    print('Press any key to continue...')
 
 # Main Menu
 def mainMenu(gvoIP):
@@ -267,11 +266,12 @@ def publishAlarmsMenu(gvoIP):
                     sleep(1)
 
             elif publishAlarmsMenuSelect == 4:
-                if publisher != None:
-                    publishAllAlarms(gvoIP, origin)
-                else:
-                    print('Publisher not created')
-                    sleep(1)
+                # it takes a loooong time to read the data, the publisher is probably being pruned.
+                # create a publisher after reading
+                # do this in the function in publisher.py
+                pub = publishAllAlarms(gvoIP)
+                publisher = pub['name']
+                origin = pub['origin']
 
             elif publishAlarmsMenuSelect == 5:
                 if publisher != None:
@@ -428,6 +428,29 @@ def getAlarmsMenu(gvoIP):
             print()
             sleep(1)
 
+# MOTD Banner
+def motd():
+	print('██████╗ ██████╗  █████╗ ███████╗███████╗    ██╗   ██╗ █████╗ ██╗     ██╗     ███████╗██╗   ██╗     ')
+	print('██╔════╝ ██╔══██╗██╔══██╗██╔════╝██╔════╝    ██║   ██║██╔══██╗██║     ██║     ██╔════╝╚██╗ ██╔╝    ')
+	print('██║  ███╗██████╔╝███████║███████╗███████╗    ██║   ██║███████║██║     ██║     █████╗   ╚████╔╝     ')
+	print('██║   ██║██╔══██╗██╔══██║╚════██║╚════██║    ╚██╗ ██╔╝██╔══██║██║     ██║     ██╔══╝    ╚██╔╝      ')
+	print('╚██████╔╝██║  ██║██║  ██║███████║███████║     ╚████╔╝ ██║  ██║███████╗███████╗███████╗   ██║       ')
+	print('╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝      ╚═══╝  ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝   ╚═╝        ')
+	print('																								      ')
+	print('███████╗███╗   ███╗███████╗ █████╗     ███████╗███████╗██████╗ ██╗   ██╗██╗ ██████╗███████╗███████╗')
+	print('██╔════╝████╗ ████║██╔════╝██╔══██╗    ██╔════╝██╔════╝██╔══██╗██║   ██║██║██╔════╝██╔════╝██╔════╝')
+	print('█████╗  ██╔████╔██║█████╗  ███████║    ███████╗█████╗  ██████╔╝██║   ██║██║██║     █████╗  ███████╗')
+	print('██╔══╝  ██║╚██╔╝██║██╔══╝  ██╔══██║    ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║██║     ██╔══╝  ╚════██║')
+	print('███████╗██║ ╚═╝ ██║███████╗██║  ██║    ███████║███████╗██║  ██║ ╚████╔╝ ██║╚██████╗███████╗███████║')
+	print('╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝    ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝ ╚═════╝╚══════╝╚══════╝')
+	print('																								      ')
+	print('                                                                                                   ')
+	print('███    ███ ██ ██   ██ ███████     ███    ███ ██    ██ ███    ██ ███    ██ ███████                  ')
+	print('████  ████ ██ ██  ██  ██          ████  ████ ██    ██ ████   ██ ████   ██ ██                       ')
+	print('██ ████ ██ ██ █████   █████       ██ ████ ██ ██    ██ ██ ██  ██ ██ ██  ██ ███████                  ')
+	print('██  ██  ██ ██ ██  ██  ██          ██  ██  ██ ██    ██ ██  ██ ██ ██  ██ ██      ██                  ')
+	print('██      ██ ██ ██   ██ ███████     ██      ██  ██████  ██   ████ ██   ████ ███████                  ')
+
 if __name__ == '__main__':
     # 1st commandline argument is GVO IP address
     if len(sys.argv)==2:
@@ -453,6 +476,12 @@ if __name__ == '__main__':
         gvoIP = None
         deviceAddress = None
     
+    # fancy stuff
+    print(title)
+    print()
+    motd()
+    sleep(0.5)
+
     # set window focus
     focus('roar')
     mainMenu(gvoIP)

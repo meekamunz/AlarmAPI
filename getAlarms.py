@@ -36,6 +36,11 @@ def selectDevice(ipAddress, menu):
             print('List of devices:')
             print()
             devices = deviceList(ipAddress)
+            # check for no devices
+            if len(devices) == 0:
+                print('No devices detected.  Check DDS domains on Alarm API and Mnitoring services.')
+                wait()
+                return {"address": None, "name": None}
             #devices.sort() # removed due to sort in deviceList(ipAddress)
             deviceNum = 1
             maxDevices = len(devices)+1
@@ -52,7 +57,7 @@ def selectDevice(ipAddress, menu):
             deviceSelect = deviceSelect-1
             if 0 <= deviceSelect <= maxDevices:
                 deviceName = getDeviceName(devices[deviceSelect], ipAddress)
-                #return device with "name" and "address" key pairs
+                # return device with "name" and "address" key pairs
                 device = {"address": devices[deviceSelect], "name": deviceName}
                 return device
             elif deviceSelect == -1:
@@ -64,7 +69,7 @@ def selectDevice(ipAddress, menu):
                 print()
                 sleep(1)
                 pass
-            
+            #
         except (IndexError, ValueError) as e:# input error handling, can print(e) if required
             print()
             print('Invalid selection.  Please use a number in the list.')
@@ -101,6 +106,5 @@ def displayAlarms(ipAddress, deviceAddress, alarmLevel):
                 alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
             i=i+1
         j=j+1
-    print('Press any key to continue')
     wait()
     return alarms

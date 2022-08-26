@@ -84,12 +84,24 @@ def setAlarm(ipAddress, origin):
     return path
 
 # publishAllAlarms
-def publishAllAlarms(ipAddress, origin):
+def publishAllAlarms(ipAddress):
+    # create publsiher
+    name = 'GVO-Services'
+    # need to get uuid first
+    origin = str(uuid.uuid4())
+    data = {'name': name, 'origin': origin}
     # Get CSV data as alarmData
     alarmData = importCSV(origin)
+    # create publisher now
+    pub = put(ipAddress, 'publishers', data)
+    print(pub)
+    # post alarm data
     p = post(ipAddress, 'alarms', alarmData)
     print(p)
     sleep(0.5)
+    # maintain immediately
+    maintainAlarms(ipAddress, name, origin)
+    return data
 
 # removeAlarms
 def removeAlarms(ipAddress, origin):

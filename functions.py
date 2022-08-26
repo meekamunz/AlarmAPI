@@ -17,6 +17,7 @@ def clear():
 
 #wait for key press
 def wait():
+    print('Press any key to continue...')
     m.getch()
     print('Where\'s the \'Any\' key?')
 

@@ -49,6 +49,7 @@ def getAlarmSubs(ipAddress, subId):
             p = get(ipAddress, 'alarms/changes?subscriptionId='+subId)
             if p.status_code == 200:
                 data = json.loads(p.content)
+                # pretty print json
                 print(json.dumps(data, indent=4, sort_keys=True))
                 print()
                 print('Press \'<ctrl+c>\' to stop')
