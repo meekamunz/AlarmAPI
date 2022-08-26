@@ -1,5 +1,5 @@
 import csv
-from functions import wait, clear
+from functions import wait, clear, focus
 from getAlarms import getDeviceName
 import tkinter as tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
@@ -32,6 +32,7 @@ def csvWriter(alarms, ipAddress):
 def alarmsFile():
     types = [('All tyes(*.*)', '*.*'),("csv file(*.csv)","*.csv")]
     outFile = asksaveasfilename(filetypes = types, defaultextension = types)
+    focus('roar')
     return str(outFile)
 
 # open csv file and convert to dictionary
@@ -39,6 +40,9 @@ def importCSV(origin):
     # open csv file as 'inFile'
     types = [('All tyes(*.*)', '*.*'),("csv file(*.csv)","*.csv")]
     inFile = askopenfilename(filetypes = types, defaultextension = types)
+
+    # refocus to app window
+    focus('roar')
 
     # convert inFile to alarm data
     with open (str(inFile), newline='') as csvFile:
