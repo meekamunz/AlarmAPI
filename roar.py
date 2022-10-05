@@ -3,7 +3,8 @@ from functions import wait, clear, isGoodIPv4, focus
 from publisher import createPublisher, setAlarm, maintainAlarms, removeAlarms, removePublisher, publishAllAlarms
 from csvAlarms import csvWriter
 from apiAccess import purge, delete
-from subscriber import createSubscriber, getAlarmSubs, getSubscriber, subscribeAll
+from subscriber import createSubscriber, getAlarmSubs, getSubscriber, subscribeAll, getAlarmSubsJSON
+from sqlData import sqlDataImport
 from time import sleep
 import sys
 
@@ -176,6 +177,7 @@ def subscriberMenu(gvoIP):
             print(' [2] Create Alarm Subscriber, for all devices')
             print(' [.]')
             print(' [3] Show Live Data')
+            print(' [4] Stream Live Data to SQL')
             print(' [.]')
             print(' [0] Return to Main Menu')
             print()
@@ -197,6 +199,19 @@ def subscriberMenu(gvoIP):
                 else:
                     print('Subscriber not created.')
                     sleep(1)
+
+            elif subscriberMenuSelect == 4:
+                # check if subscriber still exists
+                    if getSubscriber(gvoIP, subscriber) == True:
+                        try:
+                            while True:
+                                jsonData = getAlarmSubsJSON(gvoIP, subscriber)
+                                sqlDataImport(jsonData, )
+                        except:
+                            pass
+                    else:
+                        print('Subscriber not created.')
+                        sleep(1)
 
             elif subscriberMenuSelect == 0:
                 subscriberMenuLoop = False
