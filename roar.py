@@ -92,6 +92,17 @@ class RoarApp(tk.Tk):
         dev_frame = ttk.LabelFrame(mid, text='Devices')
         dev_frame.pack(side='left', fill='both', expand=False, padx=(0, 4))
 
+        # Device filter
+        dev_filter_frame = ttk.Frame(dev_frame)
+        dev_filter_frame.pack(fill='x', padx=4, pady=(4, 0))
+        ttk.Label(dev_filter_frame, text='Filter:').pack(side='left')
+        self.dev_filter_var = tk.StringVar()
+        self.dev_filter_var.trace_add('write', lambda *_: self._filter_device_list())
+        ttk.Entry(dev_filter_frame, textvariable=self.dev_filter_var, width=28).pack(side='left', padx=(4, 0), fill='x', expand=True)
+
+        # Tracks which self.devices index each visible listbox row maps to
+        self._dev_visible_indices = []
+
         self.device_listbox = tk.Listbox(dev_frame, selectmode='extended', width=40, exportselection=False)
         dev_scroll = ttk.Scrollbar(dev_frame, orient='vertical', command=self.device_listbox.yview)
         self.device_listbox.configure(yscrollcommand=dev_scroll.set)
@@ -128,6 +139,14 @@ class RoarApp(tk.Tk):
         table_frame = ttk.LabelFrame(mid, text='Collected Alarms')
         table_frame.pack(side='left', fill='both', expand=True, padx=(4, 0))
 
+        # Alarm filter
+        alarm_filter_frame = ttk.Frame(table_frame)
+        alarm_filter_frame.grid(row=0, column=0, columnspan=2, sticky='ew', padx=4, pady=(4, 0))
+        ttk.Label(alarm_filter_frame, text='Filter:').pack(side='left')
+        self.alarm_filter_var = tk.StringVar()
+        self.alarm_filter_var.trace_add('write', lambda *_: self._filter_alarm_table())
+        ttk.Entry(alarm_filter_frame, textvariable=self.alarm_filter_var).pack(side='left', padx=(4, 0), fill='x', expand=True)
+
         self.alarm_tree = ttk.Treeview(table_frame, columns=ALARM_COLUMNS, show='headings', selectmode='browse')
         for col in ALARM_COLUMNS:
             self.alarm_tree.heading(col, text=col)
@@ -138,10 +157,10 @@ class RoarApp(tk.Tk):
         tree_hscroll = ttk.Scrollbar(table_frame, orient='horizontal', command=self.alarm_tree.xview)
         self.alarm_tree.configure(yscrollcommand=tree_vscroll.set, xscrollcommand=tree_hscroll.set)
 
-        self.alarm_tree.grid(row=0, column=0, sticky='nsew')
-        tree_vscroll.grid(row=0, column=1, sticky='ns')
-        tree_hscroll.grid(row=1, column=0, sticky='ew')
-        table_frame.rowconfigure(0, weight=1)
+        self.alarm_tree.grid(row=1, column=0, sticky='nsew')
+        tree_vscroll.grid(row=1, column=1, sticky='ns')
+        tree_hscroll.grid(row=2, column=0, sticky='ew')
+        table_frame.rowconfigure(1, weight=1)
         table_frame.columnconfigure(0, weight=1)
 
     # ── Tab 2: Publish Alarms ────────────────────────────────────────
@@ -330,16 +349,48 @@ class RoarApp(tk.Tk):
                 self.after(0, lambda: self._on_connect_error(str(e)))
 
     def _populate_device_list(self):
-        self.device_listbox.delete(0, 'end')
-        for addr, name in self.devices:
-            display = f'{addr}  —  {name}' if name != addr else addr
-            self.device_listbox.insert('end', display)
+        self.dev_filter_var.set('')  # clear filter on fresh connect
+        self._refresh_device_listbox()
         self.src_connect_btn.configure(state='normal')
         self.src_cancel_btn.configure(state='disabled')
         # Auto-fill live-data and purge IP fields
         self.live_ip_var.set(self.source_ip)
         self.purge_ip_var.set(self.source_ip)
         self._set_status(f'Connected to {self.source_ip}  —  {len(self.devices)} device(s)')
+
+    def _refresh_device_listbox(self):
+        """Repopulate the device listbox, applying the current filter text."""
+        filt = self.dev_filter_var.get().strip().lower()
+        self.device_listbox.delete(0, 'end')
+        self._dev_visible_indices = []
+        for idx, (addr, name) in enumerate(self.devices):
+            display = f'{addr}  —  {name}' if name != addr else addr
+            if filt and filt not in display.lower():
+                continue
+            self.device_listbox.insert('end', display)
+            self._dev_visible_indices.append(idx)
+
+    def _filter_device_list(self):
+        self._refresh_device_listbox()
+
+    def _filter_alarm_table(self):
+        """Show only alarm rows matching the filter text (searches all columns)."""
+        filt = self.alarm_filter_var.get().strip().lower()
+        # Clear tree
+        for item in self.alarm_tree.get_children():
+            self.alarm_tree.delete(item)
+        name_map = {addr: name for addr, name in self.devices}
+        shown = 0
+        for a in self.collected_alarms:
+            dev_name = name_map.get(a['path'], a['path'])
+            row = (dev_name, a['path'], a['name'], a['timestamp'],
+                   a['state'], a['value'], a['latchedState'], a['masked'],
+                   a['unmaskedState'], a['inverted'], a['acked'], a['ackedBy'])
+            if filt and not any(filt in str(v).lower() for v in row):
+                continue
+            self.alarm_tree.insert('', 'end', values=row)
+            shown += 1
+        self.alarm_count_var.set(f'Alarms: {shown}/{len(self.collected_alarms)}')
 
     def _on_connect_cancelled(self):
         self.src_connect_btn.configure(state='normal')
@@ -362,7 +413,8 @@ class RoarApp(tk.Tk):
             if not sel:
                 messagebox.showwarning('No Selection', 'Select at least one device, or choose "All devices".')
                 return
-            addresses = [self.devices[i][0] for i in sel]
+            # Map visible listbox indices back to self.devices indices
+            addresses = [self.devices[self._dev_visible_indices[i]][0] for i in sel]
         else:
             addresses = [d[0] for d in self.devices]
         self.collect_btn.configure(state='disabled')
@@ -380,6 +432,7 @@ class RoarApp(tk.Tk):
             self.after(0, lambda: self.collect_btn.configure(state='normal'))
 
     def _populate_alarm_table(self):
+        self.alarm_filter_var.set('')  # clear filter on fresh collect
         # Clear existing
         for item in self.alarm_tree.get_children():
             self.alarm_tree.delete(item)
@@ -598,7 +651,7 @@ class RoarApp(tk.Tk):
 
         def do():
             try:
-                r = setAlarm(self.dest_ip, self.publisher_origin, path, name, state, value)
+                r = setAlarm(self.dest_ip, self.publisher_origin, path, name, state.lower(), value)
                 if r.status_code in (200, 201):
                     self.after(0, lambda: self._set_status(f'Published alarm "{name}" on {path}'))
                 elif r.status_code == 409:
@@ -637,8 +690,9 @@ class RoarApp(tk.Tk):
         sel = self.device_listbox.curselection()
         if not sel:
             messagebox.showwarning('No Selection', 'Select devices on the Collect tab first.')
+
             return
-        paths = [self.devices[i][0] for i in sel]
+        paths = [self.devices[self._dev_visible_indices[i]][0] for i in sel]
         self._start_subscriber(ip, paths)
 
     def _subscribe_all(self):
