@@ -1,16 +1,18 @@
-Run roar.exe either from a File Explorer window or from command line.  If running from command line, you can optionally append the GV Orbit server IP Address and a device address on the commandline:
-roar [IP address of GV Orbit server] [device address]
+Run roar.exe either from a File Explorer window or from command line.  You can optionally pass a GV Orbit server IP Address on the command line:
+roar [IP address of GV Orbit server]
 
-If you want to append a device address, you have to append the IP address first.  You can append the IP address on its own if you wish.
+The application launches a GUI window with four tabs:
 
-This tool can perform the following tasks:
-- read alarms from a GV Orbit Alarm API instance
-- save those alarms to a CSV file
-- write a single alarm to a GV Orbit Alarm API instance
-- write a CSV list of alarms to a GV Orbit Alarm API instance.  The CSV file data must be in the following format:
-	Device Name,Address,Alarm,Time,State,Value,Latched State,Masked,Unmasked,State,Inverted,Acknowledged,Acknowledged By,
-- maintain published alarms
-- purge stale alarms
-- view live alarm data
+**Collect Alarms** — Connect to a source GV Orbit server, browse devices, filter by severity (Critical/Warn/OK/Unknown/All), and collect alarms into a table.  Save collected alarms to CSV or JSON.
+
+**Publish Alarms** — Set a destination GV Orbit server, create a publisher, and publish alarms.  You can publish the alarms collected on the Collect tab, import from a CSV or JSON file, or publish a single alarm manually.  Use "Start Maintaining" to keep the publisher alive in the background.
+
+**Live Data** — Subscribe to alarm changes on a server (selected devices or all) and view live alarm updates in real time.
+
+**Utilities** — Purge stale alarm data from a server.
+
+On exit, the application automatically cleans up any active publishers and subscribers.
+
+The old CLI version is preserved as roar_cli.py for reference.
 
 Michael.Munns@grassvalley.com

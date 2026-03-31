@@ -1,36 +1,12 @@
-from functions import wait, clear
 from apiAccess import get, put
 from time import sleep
 import json
+import threading
 
-# createSubscriber
-def createSubscriber(ipAddress):
-    # multiple path entries
-    numDevices = int(input('Enter the number devices do you want to monitor: '))
-    devices = ['']*numDevices
-    currentDeviceList = json.loads(get(ipAddress, 'devices').text)
-    i=0
-    deviceLoop = True
-    while deviceLoop:
-        if i < numDevices:
-            innerLoop = True
-            while innerLoop:
-                testPath = input('Set device address: ')
-                # check if testPath is real
-                if testPath in currentDeviceList:
-                    # add device to list as a json string, then close innerloop
-                    devices[i] = {'path': testPath}
-                    innerLoop = False
-                else:
-                    print('Invalid alarm address.')
-                    sleep(1)
-            i=i+1
-        else: deviceLoop = False
-
-    # combine device list into json data string
+# createSubscriber — accepts a list of device path strings
+def createSubscriber(ipAddress, devicePaths):
+    devices = [{'path': p} for p in devicePaths]
     data = {'type': 'pull', 'filter': devices}
-
-    # PUT the subscriber creation
     subscriber = put(ipAddress, 'subscribers', data)
     return subscriber.content.decode("utf-8")
 
@@ -42,43 +18,33 @@ def getSubscriber(ipAddress, subId):
     else: 
         return False
 
-# getAlarmSubs
-def getAlarmSubs(ipAddress, subId):
+# getAlarmSubs — polls for alarm changes, calls callback with data
+# Uses long polling: server blocks up to 30s when no data, returns immediately when data available
+def getAlarmSubs(ipAddress, subId, stop_event=None, callback=None):
+    if stop_event is None:
+        stop_event = threading.Event()
     try:
-        while True:
+        while not stop_event.is_set():
             p = get(ipAddress, 'alarms/changes?subscriptionId='+subId)
             if p.status_code == 200:
                 data = json.loads(p.content)
-                # pretty print json
-                print(json.dumps(data, indent=4, sort_keys=True))
-                print()
-                print('Press \'<ctrl+c>\' to stop')
-                sleep(0.5)
+                if callback:
+                    callback(data)
+            elif p.status_code == 204:
+                # No events during this poll cycle, continue polling
+                continue
             else:
-                print('Failed to get alarm updates.')
-                sleep(1)
+                if callback:
+                    callback(None)
                 break
-    except:
+    except Exception:
         pass
 
 # subscribeAll
 def subscribeAll(ipAddress):
-    # get a list of devices
     deviceList = json.loads(get(ipAddress, 'devices').text)
-    
-    # add json bits around device addresses
-    devices = ['']*len(deviceList)
-    deviceLoop = True
-    i=0
-    while deviceLoop:
-        if i < len(devices): devices[i] = {'path': deviceList[i]}
-        else: deviceLoop = False
-        i=i+1
-    
-    # combine device list into json data string
+    devices = [{'path': d} for d in deviceList]
     data = {'type': 'pull', 'filter': devices}
-    
-    # PUT the subscriber creation
     subscriber = put(ipAddress, 'subscribers', data)
     return subscriber.content.decode("utf-8")
 

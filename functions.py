@@ -1,8 +1,16 @@
-import msvcrt as m
 import os, re
 from time import sleep
 from json import JSONEncoder
-import pygetwindow as gw
+
+try:
+    import msvcrt as m
+except ImportError:
+    m = None
+
+try:
+    import pygetwindow as gw
+except ImportError:
+    gw = None
 
 # JSONEncoder
 class DateTimeEncoder(JSONEncoder):

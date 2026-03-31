@@ -1,6 +1,5 @@
 import json
-from functions import wait, clear
-from apiAccess import get
+from apiAccess import get, put, delete
 from time import sleep
 
 # deviceList
@@ -12,20 +11,18 @@ def deviceList(ipAddress):
 
 # getDeviceAlarms
 def getDeviceName(dAddress, ipAddress):
-    if dAddress in deviceList(ipAddress):
-        # get all alarms for dAddress
-        name = json.loads(get(ipAddress, 'alarms?path='+dAddress).content)
-        # if NAME or IDNAME exists, get device name for selected device
-        deviceName=dAddress
-        i=0
-        while i < len(name):
-            if name[i]['id']['name'] == "NAME":
-                deviceName = name[i]['state']['value']
-            # I don't think I ever want to use IDNAME
-            #elif name[i]['id']['name'] == "IDNAME":
-            #    deviceName = name[i]['state']['value']
-            i=i+1
-        return deviceName
+    # use name=NAME filter so server returns only the NAME alarm (not all alarms)
+    try:
+        name = json.loads(get(ipAddress, 'alarms?path='+dAddress+'&name=NAME').content)
+    except Exception:
+        return dAddress
+    # if NAME exists, get device name for selected device
+    deviceName=dAddress
+    for alarm in name:
+        if alarm['id']['name'] == "NAME":
+            deviceName = alarm['state']['value']
+            break
+    return deviceName
 
 # selectDevice
 def selectDevice(ipAddress, menu):
@@ -78,33 +75,80 @@ def selectDevice(ipAddress, menu):
             sleep(1)
             pass
 
-# displayAlarms
+# displayAlarms — uses a temporary PULL subscriber to bulk-fetch all alarms
+# instead of making N sequential /alarms?path= calls
 def displayAlarms(ipAddress, deviceAddress, alarmLevel):
-    # handle multiple devices
-    global alarms
-    alarms=[]
-    j=0
-    while j < len(deviceAddress):
-        # set alarm state values
-        failValues = ['Critical', 'critical', 'Fail', 'FAIL', 'fail']
-        warnValues = ['Warn', 'warn', 'WARN', 'Major', 'Minor', 'major', 'minor']
-        okValues = ['OK', 'Ok', 'ok', 'normal']
-        unknownValues = ['Unknown', 'UNKNOWN', 'NoState', 'Nostate', 'nostate', 'none', 'None', 'NONE']
-        allValues = failValues + warnValues + okValues + unknownValues
-        if alarmLevel in failValues: state = failValues
-        if alarmLevel in warnValues: state = warnValues
-        if alarmLevel in okValues: state = okValues
-        if alarmLevel in unknownValues: state = unknownValues
-        if alarmLevel == 'all': state = allValues
-        # get alarms
-        results = json.loads(get(ipAddress, 'alarms?path='+str(deviceAddress[j])).content)
-        print('Getting '+alarmLevel+' alarms from '+str(deviceAddress[j])+'...')
-        # for alarms matching result, append to list
-        i=0
-        while i < len(results):
-            if results[i]['state']['state'] in state:
-                alarms.append({'name': results[i]['id']['name'], 'path': results[i]['id']['path'], 'state': results[i]['state']['state'], 'acked': results[i]['state']['acked'], 'ackedBy': results[i]['state']['ackedBy'], 'inverted': results[i]['state']['inverted'], 'latchedState': results[i]['state']['latchedState'], 'masked': results[i]['state']['masked'], 'timestamp': results[i]['state']['timestamp'], 'unmaskedState': results[i]['state']['unmaskedState'], 'value': results[i]['state']['value']})
-            i=i+1
-        j=j+1
-    wait()
+    # set alarm state filter values
+    failValues = ['Critical', 'critical', 'Fail', 'FAIL', 'fail']
+    warnValues = ['Warn', 'warn', 'WARN', 'Major', 'Minor', 'major', 'minor']
+    okValues = ['OK', 'Ok', 'ok', 'normal']
+    unknownValues = ['Unknown', 'UNKNOWN', 'NoState', 'Nostate', 'nostate', 'none', 'None', 'NONE']
+    allValues = failValues + warnValues + okValues + unknownValues
+    if alarmLevel in failValues: state = failValues
+    elif alarmLevel in warnValues: state = warnValues
+    elif alarmLevel in okValues: state = okValues
+    elif alarmLevel in unknownValues: state = unknownValues
+    else: state = allValues
+
+    # Convert device addresses to filter format
+    deviceSet = set(deviceAddress)
+    filters = [{'path': addr} for addr in deviceAddress]
+
+    # Try subscription-based bulk fetch (3 API calls instead of N)
+    try:
+        # Create temporary PULL subscriber filtered to these devices
+        sub_data = {'type': 'pull', 'filter': filters}
+        sub_resp = put(ipAddress, 'subscribers', sub_data)
+        sub_id = sub_resp.content.decode('utf-8').strip().strip('"')
+
+        # Pull initial alarm dump — server delivers all current alarms on first poll
+        changes_resp = get(ipAddress, 'alarms/changes?subscriptionId=' + sub_id)
+
+        # Clean up subscriber immediately
+        try:
+            delete(ipAddress, 'subscribers?subscriptionId=' + sub_id, None)
+        except Exception:
+            pass
+
+        if changes_resp.status_code == 200:
+            events = json.loads(changes_resp.content)
+            alarms = []
+            for item in events.get('items', []):
+                alarm = item.get('update')
+                if alarm and alarm['id']['path'] in deviceSet:
+                    if alarm['state']['state'] in state:
+                        alarms.append({
+                            'name': alarm['id']['name'],
+                            'path': alarm['id']['path'],
+                            'state': alarm['state']['state'],
+                            'acked': alarm['state'].get('acked', False),
+                            'ackedBy': alarm['state'].get('ackedBy', ''),
+                            'inverted': alarm['state'].get('inverted', False),
+                            'latchedState': alarm['state'].get('latchedState', ''),
+                            'masked': alarm['state'].get('masked', False),
+                            'timestamp': alarm['state'].get('timestamp', ''),
+                            'unmaskedState': alarm['state'].get('unmaskedState', ''),
+                            'value': alarm['state'].get('value', '')
+                        })
+            return alarms
+    except Exception:
+        pass
+
+    # Fallback: sequential per-device fetching if subscription approach fails
+    alarms = []
+    for addr in deviceAddress:
+        try:
+            results = json.loads(get(ipAddress, 'alarms?path=' + str(addr)).content)
+            for r in results:
+                if r['state']['state'] in state:
+                    alarms.append({
+                        'name': r['id']['name'], 'path': r['id']['path'],
+                        'state': r['state']['state'], 'acked': r['state']['acked'],
+                        'ackedBy': r['state']['ackedBy'], 'inverted': r['state']['inverted'],
+                        'latchedState': r['state']['latchedState'], 'masked': r['state']['masked'],
+                        'timestamp': r['state']['timestamp'], 'unmaskedState': r['state']['unmaskedState'],
+                        'value': r['state']['value']
+                    })
+        except Exception:
+            pass
     return alarms

@@ -5,4 +5,4 @@ rmdir /s /q build
 rmdir /s /q dist
 del *.spec
 
-pyinstaller --onefile --icon=icon.ico --name=roar roar.py
+pyinstaller --onefile --windowed --icon=icon.ico --name=roar roar.py

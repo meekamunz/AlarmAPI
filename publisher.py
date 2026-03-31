@@ -1,121 +1,67 @@
 import uuid
-from functions import wait, clear
 from apiAccess import put, post, delete
-from csvAlarms import importCSV
 from time import sleep
 import datetime
+import threading
 
 # createPublisher
-def createPublisher(ipAddress):
+def createPublisher(ipAddress, name=None):
     origin = str(uuid.uuid4())
-    try:
-        name = input('Enter Publisher name: ')
-    except (ValueError) as e:# input error handling, can print(e) if required
-            print()
-            print('Invalid name')
-            print()
-            sleep(1)
-            pass
-
+    if name is None:
+        name = 'ROAR-Publisher'
     data = {'name': name, 'origin': origin}
     p = put(ipAddress, 'publishers', data)
-    print(p)
-    sleep(0.5)
     if p.status_code == 403:
         data = {'name': 'Write access on server is disabled', 'origin': None}
     return data
 
-# maintainAlarms
-def maintainAlarms(ipAddress, name, origin):
-    clear()
+# maintainAlarms — runs in a loop until stop_event is set
+def maintainAlarms(ipAddress, name, origin, stop_event=None, callback=None):
+    if stop_event is None:
+        stop_event = threading.Event()
     data = {'name': name, 'origin': origin}
-    #p = put(ipAddress, 'publishers', data)
-    print('Maintaining alarms for Publisher: '+name+', PublisherID: '+origin)
-    print('Press \'<ctrl+c>\' to stop')
     try:
-        while True:
+        while not stop_event.is_set():
             p = put(ipAddress, 'publishers', data)
             if p.status_code == 201:
-                # publish again, then wait for 10 seconds.  
-                # for some reason I can't use the 'p' variable to publish again???
-                #put(ipAddress, 'publishers', data)
-                sleep(10)
+                stop_event.wait(10)
             else:
-                print('Failed to maintain alarm publisher.')
-                sleep(1)
+                if callback:
+                    callback(False, 'Failed to maintain alarm publisher.')
                 break
-    except:
+    except Exception:
         pass
 
 # setAlarm
-def setAlarm(ipAddress, origin):
+def setAlarm(ipAddress, origin, path, name, state, value):
     # get time/date, limit to milliseconds
     t = datetime.datetime.now()
     time = t.isoformat(timespec='milliseconds')
 
-    # legal state values
-    states = ['unknown', 'ok', 'warn', 'fail', 'Unknown', 'Ok', 'Warn', 'Fail', 'UNKNOWN', 'OK', 'WARN', 'FAIL']
-
-    # set custom alarm parameters
-    try:
-        path=input('Set device address: ')
-        name=input('Set alarm name: ')
-        stateLoop = True
-        while stateLoop:
-            state=input('Set alarm state: ')
-            if state in states: stateLoop = False
-            else:
-                print('Invalid state.')
-        value=input('Set alarm value: ')
-    except (ValueError) as e:# input error handling, can print(e) if required
-            print()
-            print('Invalid entry.')
-            print()
-            sleep(1)
-            pass
     data = [{'id': {'name': str(name), 'path': str(path)},'origin': str(origin), 'state': {'state': str(state), 'timestamp': str(time)+'Z', 'value': str(value)}}]
     p = post(ipAddress, 'alarms', data)
-    print(p)
-    if p.status_code == 409:
-        print('An existing item already exists and cannot be modified.')
-        wait()
-    sleep(0.5)
-    # return the current deviceAddress
-    return path
+    return p
 
-# publishAllAlarms
-def publishAllAlarms(ipAddress):
-    # create publsiher
-    name = 'GVO-Services'
-    # need to get uuid first
+# publishAllAlarms — publish alarm data list, return publisher data
+def publishAllAlarms(ipAddress, alarmData, name=None):
+    if name is None:
+        name = 'GVO-Services'
     origin = str(uuid.uuid4())
     data = {'name': name, 'origin': origin}
-    # Get CSV data as alarmData
-    alarmData = importCSV(origin)
-    # create publisher now
+    # create publisher
     pub = put(ipAddress, 'publishers', data)
-    print(pub)
     # post alarm data
     p = post(ipAddress, 'alarms', alarmData)
-    print(p)
-    sleep(0.5)
-    # maintain immediately
-    maintainAlarms(ipAddress, name, origin)
-    return data
+    return {'name': name, 'origin': origin, 'pub_response': pub, 'alarm_response': p}
 
 # removeAlarms
-def removeAlarms(ipAddress, origin):
-    # set path and alarm name
-    path=input('Set device address: ')
-    name=input('Set alarm name: ')
+def removeAlarms(ipAddress, origin, path, name):
     data = [{"name": name,"path": path}]
     p = post(ipAddress, 'alarms/deletions?publicationId='+origin, data)
-    print(p)
-    sleep(0.5)
+    return p
 
 # remove publisher
 def removePublisher(ipAddress, origin):
     d = delete(ipAddress, 'publishers?publicationId='+origin, None)
-    print(d)
-    sleep(0.5)
+    return d
     return d
